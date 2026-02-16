@@ -15,7 +15,7 @@ class CategoryViewSet(ModelViewSet):
     - PATCH  /api/categories/{id}/  部分更新（partial_update）
     - DELETE /api/categories/{id}/  削除（destroy）
 
-    認証・フィルタリング・ページネーション等は要件にないため追加しない。
+    認証は要件にないため追加しない。
     """
 
     # queryset: このViewSetが操作する対象のデータセット

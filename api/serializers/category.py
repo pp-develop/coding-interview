@@ -6,7 +6,8 @@ from api.models.category import Category
 class CategorySerializer(serializers.ModelSerializer):
     """
     CategoryモデルのSerializer。
-    ModelSerializer はモデル定義を読み取り、以下のバリデーションを自動生成する:
+    ModelSerializer はモデル定義を読み取り、バリデーションを自動生成する。
+    以下はフレームワーク側に任せているため、カスタム実装しない:
     - name: 必須チェック、max_length=255
     - company: 存在する企業IDであること（ForeignKey の参照整合性）
     - parent_category: 存在するカテゴリIDであること（null は許可 = ルートカテゴリ作成可）
@@ -14,8 +15,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
     加えて、以下のカスタムバリデーションを validate() で実装:
     - parent_category は同一企業のカテゴリであること
+      例: 企業Aの「カテゴリX」に、企業Bの「カテゴリY」を親として設定 → エラー
     - 自分自身を親カテゴリに設定できないこと（自己参照・循環参照の防止）
+      例: 「カテゴリA(子)→カテゴリB(親)」の関係で「カテゴリB」の親を「カテゴリA」に変更（A→B→Aのループ） → エラー
     - 更新時に company を変更できないこと
+      例: 企業Aのカテゴリを PATCH で企業Bに変更 → エラー
     """
 
     class Meta:
@@ -31,7 +35,9 @@ class CategorySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"company": "企業の変更はできません"})
 
         # parent_category が同一企業に属しているかチェック
-        # 更新時に company が送られない場合(PATCH)は instance の company を使う
+        # PATCH は部分更新のため company が送られないことがある
+        # 例: PATCH {"parent_category": "UUID"} → data に company がない
+        # → 変更対象のレコードの company で「親カテゴリが同じ企業か」を判定する
         parent = data.get("parent_category")
         company = data.get("company", getattr(self.instance, "company", None))
         if parent and company and parent.company != company:
