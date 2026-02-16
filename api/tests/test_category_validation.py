@@ -66,3 +66,24 @@ class CategoryValidationTests(APITestCase):
         data = {"company": self.other_company.id}
         response = self.client.patch(f"/api/categories/{self.category.id}/", data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_without_name(self):
+        """name なしで作成すると400を返すこと。"""
+        data = {"company": self.company.id}
+        response = self.client.post("/api/categories/", data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_without_company(self):
+        """company なしで作成すると400を返すこと。"""
+        data = {"name": "カテゴリ"}
+        response = self.client.post("/api/categories/", data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_duplicate_name_in_same_company(self):
+        """同一企業内でカテゴリ名が重複する場合は400を返すこと。"""
+        data = {
+            "company": self.company.id,
+            "name": "テストカテゴリ",  # setUp で作成済みの名前
+        }
+        response = self.client.post("/api/categories/", data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -18,7 +18,5 @@ class CategoryViewSet(ModelViewSet):
     認証は要件にないため追加しない。
     """
 
-    # queryset: このViewSetが操作する対象のデータセット
     queryset = Category.objects.all()
-    # serializer_class: リクエスト/レスポンスのJSON変換・バリデーションに使用するSerializer
     serializer_class = CategorySerializer

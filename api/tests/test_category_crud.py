@@ -47,8 +47,44 @@ class CategoryCrudTests(APITestCase):
         self.category.refresh_from_db()
         self.assertEqual(self.category.name, "更新後カテゴリ")
 
+    def test_update_full(self):
+        """PUT /api/categories/{id}/ でカテゴリを全更新できること。"""
+        data = {
+            "company": self.company.id,
+            "name": "全更新カテゴリ",
+            "parent_category": None,
+        }
+        response = self.client.put(
+            f"/api/categories/{self.category.id}/", data, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.category.refresh_from_db()
+        self.assertEqual(self.category.name, "全更新カテゴリ")
+        self.assertIsNone(self.category.parent_category)
+
     def test_destroy(self):
         """DELETE /api/categories/{id}/ でカテゴリを削除できること。"""
         response = self.client.delete(f"/api/categories/{self.category.id}/")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Category.objects.count(), 0)
+
+    def test_retrieve_not_found(self):
+        """存在しないIDを指定した場合は404を返すこと。"""
+        import uuid
+
+        response = self.client.get(f"/api/categories/{uuid.uuid4()}/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_not_found(self):
+        """存在しないIDを更新しようとした場合は404を返すこと。"""
+        import uuid
+
+        response = self.client.patch(f"/api/categories/{uuid.uuid4()}/", {"name": "x"})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_destroy_not_found(self):
+        """存在しないIDを削除しようとした場合は404を返すこと。"""
+        import uuid
+
+        response = self.client.delete(f"/api/categories/{uuid.uuid4()}/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
